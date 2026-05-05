@@ -1,19 +1,25 @@
-const Database = require("better-sqlite3");
+const { Pool } = require("pg");
 
-const db = new Database("./produits.db");
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS produits (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    nom        TEXT    NOT NULL,
-    detail     TEXT    DEFAULT '',
-    prix       REAL    NOT NULL,
-    image_url  TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+async function initialiser() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS produits (
+      id         SERIAL PRIMARY KEY,
+      nom        TEXT    NOT NULL,
+      detail     TEXT    DEFAULT '',
+      prix       REAL    NOT NULL,
+      image_url  TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  console.log("✅ Base de données connectée");
+  console.log("✅ Table produits prête");
+}
 
-console.log("✅ Base de données connectée");
-console.log("✅ Table produits prête");
+initialiser().catch(console.error);
 
-module.exports = db;
+module.exports = pool;
