@@ -16,8 +16,8 @@ async function initialiser() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  console.log("✅ Base de données connectée");
-  console.log("✅ Table produits prête");
+  console.log(" Base de données connectée");
+  console.log(" Table produits prête");
 }
 
 initialiser().catch(console.error);
