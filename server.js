@@ -1,25 +1,32 @@
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("cloudinary").v2;
 const pool = require("./database");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Configuration Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-if (!fs.existsSync("./uploads")) fs.mkdirSync("./uploads");
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "./uploads"),
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+// Stockage images sur Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "produits",
+    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
   },
 });
 const upload = multer({ storage });
+
+app.use(cors());
+app.use(express.json());
 
 // GET tous les produits
 app.get("/produits", async (req, res) => {
@@ -57,6 +64,7 @@ app.post("/produits", upload.single("image"), async (req, res) => {
     const imageUrl = req.file
       ? req.file.path.replace("http://", "https://")
       : null;
+
     const result = await pool.query(
       "INSERT INTO produits (nom, detail, prix, image_url) VALUES ($1, $2, $3, $4) RETURNING *",
       [nom, detail || "", parseFloat(prix), imageUrl],
