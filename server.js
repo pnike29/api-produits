@@ -4,7 +4,6 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const pool = require("./database");
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -56,9 +55,8 @@ app.post("/produits", upload.single("image"), async (req, res) => {
       return res.status(400).json({ erreur: "Nom et prix obligatoires" });
 
     const imageUrl = req.file
-      ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
+      ? req.file.path.replace("http://", "https://")
       : null;
-
     const result = await pool.query(
       "INSERT INTO produits (nom, detail, prix, image_url) VALUES ($1, $2, $3, $4) RETURNING *",
       [nom, detail || "", parseFloat(prix), imageUrl],
@@ -81,7 +79,7 @@ app.put("/produits/:id", upload.single("image"), async (req, res) => {
 
     const produit = existant.rows[0];
     const imageUrl = req.file
-      ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
+      ? req.file.path.replace("http://", "https://")
       : produit.image_url;
 
     const result = await pool.query(
